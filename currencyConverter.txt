@@ -1,9 +1,0 @@
-API Key:
-27dd1e88327514113f1c8bb939a67745
-
-API Endpoint:
-
-http://data.fixer.io/api/latest?access_key=27dd1e88327514113f1c8bb939a67745
-
-
-Monthly Calls: 1000/mo -> 33/d
