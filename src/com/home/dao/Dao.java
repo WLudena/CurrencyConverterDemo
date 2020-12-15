@@ -16,48 +16,38 @@ import java.util.Set;
 
 public class Dao {
 
-    private static final String ULR_STR = "http://data.fixer.io/api/latest?access_key=27dd1e88327514113f1c8bb939a67745";
+    private static String ULR_STR = "http://data.fixer.io/api/latest?access_key=";
     private SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyy HH:mm:ss");
     private Date date = new Date();
+    private JSONObject rootObject = null;
 
     public void writeInitialData(File f) {
-        try {
-            FileOutputStream os = new FileOutputStream(f, true);
-            //Make request
-            URL url = new URL(ULR_STR);
-            HttpURLConnection request = (HttpURLConnection) url.openConnection();
-            request.connect();
-            //Convert to JSON
-            JSONParser parser = new JSONParser();
-            JSONObject root = (JSONObject) parser.parse(new InputStreamReader((InputStream) request.getContent()));
-
-            root.put("lastupdate", formatter.format(date));
-            try (FileWriter file = new FileWriter(f)) {
-                file.write(root.toJSONString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        } catch (IOException | ParseException e) {
+        rootObject.put("lastupdate", formatter.format(date));
+        try (FileWriter file = new FileWriter(f)) {
+            file.write(rootObject.toJSONString());
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void updateData(File f) {
-        try {
+        try{
             JSONParser parser = new JSONParser();
-            JSONObject obj = (JSONObject) parser.parse(new FileReader(f.getName()));
+            rootObject = (JSONObject) parser.parse(new FileReader(f));
+        }catch(ParseException | IOException e){
+            e.printStackTrace();
+        }
 
-            String lastUpdate = obj.get("lastupdate").toString().substring(obj.get("lastupdate").toString().indexOf(" ") + 1);
-            String currentTime = formatter.format(date).substring(formatter.format(date).indexOf(" ") + 1);
+        String lastUpdate = rootObject.get("lastupdate").toString().substring(rootObject.get("lastupdate").toString().indexOf(" ") + 1);
+        String currentTime = formatter.format(date).substring(formatter.format(date).indexOf(" ") + 1);
 
-            int val1 = (Integer.parseInt(lastUpdate.substring(0, 2)) * 60) + Integer.parseInt(lastUpdate.substring(3, 5)); // change time to minutes (00:00 = 0, 23:59 = 1439)
-            int val2 = (Integer.parseInt(currentTime.substring(0, 2)) * 60) + Integer.parseInt(currentTime.substring(3, 5));
+        int val1 = (Integer.parseInt(lastUpdate.substring(0, 2)) * 60) + Integer.parseInt(lastUpdate.substring(3, 5)); // change time to minutes (00:00 = 0, 23:59 = 1439)
+        int val2 = (Integer.parseInt(currentTime.substring(0, 2)) * 60) + Integer.parseInt(currentTime.substring(3, 5));
 
 
-            System.out.println(val1);
-            System.out.println(val2);
-            updateFile(obj,f);
+        System.out.println(val1);
+        System.out.println(val2);
+        updateFile(rootObject, f);
 //            if (val2 > val1) { // if 60 min/1hr has passed since last update
 //                if (val2 - val1 >= 60) {
 //                    updateFile(obj, f);
@@ -73,14 +63,10 @@ public class Dao {
 //                System.out.println("No update needed");
 //            }
 
-            JSONObject s = (JSONObject) obj.get("rates");
-            Set keys = s.keySet();
-            for (Object a : keys) {
-                System.out.println(a + ": " + s.get(a));
-            }
-
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
+        JSONObject s = (JSONObject) rootObject.get("rates");
+        Set keys = s.keySet();
+        for (Object a : keys) {
+            System.out.println(a + ": " + s.get(a));
         }
 
 
@@ -104,35 +90,57 @@ public class Dao {
 
     public JSONObject getRates(File f) {
         JSONObject rates = null;
-        try{
+        try {
             JSONParser parser = new JSONParser();
             JSONObject obj = (JSONObject) parser.parse(new FileReader(f.getName()));
             rates = (JSONObject) obj.get("rates");
-        }catch(IOException | ParseException e){
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
         return rates;
     }
 
-    public Set getCurrencies(File f){
+    public Set getCurrencies(File f) {
         return getRates(f).keySet();
     }
 
-    public double getCurrencyValue(String curr, File f){
+    public double getCurrencyValue(String curr, File f) {
         return Double.parseDouble(getRates(f).get(curr).toString());
     }
 
-    public String getLastUpdate(File f){
+    public String getLastUpdate(File f) {
         String lastUpdate = "";
-        try{
+        try {
             JSONParser parser = new JSONParser();
             JSONObject obj = (JSONObject) parser.parse(new FileReader(f.getName()));
 
             lastUpdate = obj.get("lastupdate").toString();
-        }catch(ParseException | IOException e){
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
         return lastUpdate;
+    }
+
+    public boolean isConnectionSuccess(String key, File f) {
+        boolean success = false;
+        try {
+            ULR_STR += key;
+            //Make request
+            URL url = new URL(ULR_STR);
+            HttpURLConnection request = (HttpURLConnection) url.openConnection();
+            request.connect();
+            //Convert to JSON
+            JSONParser parser = new JSONParser();
+            JSONObject root = (JSONObject) parser.parse(new InputStreamReader((InputStream) request.getContent()));
+            success = (boolean) root.get("success");
+            if (success) {
+                rootObject = root;
+            }
+
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+        return success;
     }
 
     private JSONObject latestRates(File f) {
@@ -184,6 +192,5 @@ public class Dao {
         }
 
     }
-
 
 }

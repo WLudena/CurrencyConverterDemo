@@ -11,6 +11,10 @@ public class Data {
     final private static String PATH = "./dataFile.json";
     private Dao dao = new Dao();
 
+    public boolean isKeyValid(String key){
+        return dao.isConnectionSuccess(key,new File(PATH));
+    }
+
     public String[] getCurrencies(){
         File dataFile = new File(PATH);
         int numOfCur = dao.getCurrencies(dataFile).size();
@@ -27,13 +31,11 @@ public class Data {
     }
 
     public double getCurrencyValue(String currency){
-        File dataFile = new File(PATH);
-        return dao.getCurrencyValue(currency,dataFile);
+        return dao.getCurrencyValue(currency, new File(PATH));
     }
 
     public String getLastUpdate(){
-        File dataFile = new File(PATH);
-        return dao.getLastUpdate(dataFile);
+        return dao.getLastUpdate(new File(PATH));
     }
 
     public void checkFile() {
