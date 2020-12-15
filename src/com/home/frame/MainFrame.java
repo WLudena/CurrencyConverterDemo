@@ -14,9 +14,7 @@ public class MainFrame extends JFrame {
 
     private static DecimalFormat df = new DecimalFormat("0.000");
 
-    private Data data = new Data();
-
-    public MainFrame() {
+    public MainFrame(String key, Data data) {
 
         super("CurrConv");
         data.checkFile(); //perform initial check on start
